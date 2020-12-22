@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE suite SYSTEM "http://testng.org/testng-1.0.dtd">
+<suite name="Rest-API-Testing-Framework">
+    <test name="Testing-Classes">
+        <classes>
+            <class name="TC_GetAllUsersAPI"/>
+            <class name="TC_GetUserByID"/>
+            <class name="TC_AddUserAPI"/>
+        </classes>
+    </test>
+</suite>
