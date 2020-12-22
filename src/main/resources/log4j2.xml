@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Configuration status="DEBUG">
+<Appenders>
+    <Console name="LogToConsole" target="SYSTEM_OUT">
+        <PatternLayout pattern="[%highlight{%-5level}] %d{DEFAULT} %logger{36} - %msg%n%throwable{short.lineNumber}" />
+    </Console>
+    <File name="LogToFile" fileName="${sys:applogs.path}" >
+        <PatternLayout>
+            <pattern>
+                [%highlight{%-5level}] %d{DEFAULT} %logger{36} - %msg%n%throwable{short.lineNumber}
+            </pattern>
+        </PatternLayout>
+    </File>
+</Appenders>
+<Loggers>
+    <Root level="debug">
+        <AppenderRef ref="LogToFile"/>
+        <AppenderRef ref="LogToConsole"/>
+    </Root>
+</Loggers>
+</Configuration>
