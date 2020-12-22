@@ -7,7 +7,6 @@ import framework.utils.exceptions.AutomationException;
 import framework.utils.globalConstants.HttpStatus;
 import framework.utils.logManagement.APIResponseFilter;
 import framework.utils.propertiesManagement.TestProperties;
-import io.openapitools.jackson.dataformat.hal.HALMapper;
 import io.restassured.RestAssured;
 import io.restassured.builder.RequestSpecBuilder;
 import io.restassured.config.EncoderConfig;
@@ -349,7 +348,7 @@ public class RestUtil {
      */
     public <T> T responseToPojo(Class<T> type) throws AutomationException {
         try {
-            return new HALMapper().enable(DeserializationFeature.ACCEPT_SINGLE_VALUE_AS_ARRAY).readValue(getApiResponseAsString(), type);
+            return new ObjectMapper().enable(DeserializationFeature.ACCEPT_SINGLE_VALUE_AS_ARRAY).readValue(getApiResponseAsString(), type);
         } catch (IOException ioex) {
             throw new AutomationException("Response Received did not match the expected Response Format POJO: " + type.getName() + ioex);
         }
