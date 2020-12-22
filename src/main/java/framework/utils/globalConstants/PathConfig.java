@@ -51,4 +51,11 @@ public class PathConfig {
         APPLOGS_PATH = applogsPath;
     }
 
+    public static String getPropertiesTest() {
+        return PROPERTIES_TEST;
+    }
+
+    public static String getPropertiesLog4j() {
+        return PROPERTIES_LOG4J;
+    }
 }
