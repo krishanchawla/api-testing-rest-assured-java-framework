@@ -83,7 +83,7 @@ public class UserProfileService {
 
     public UserProfileService addUserProfiles(User user) throws AutomationException {
 
-        ExtentTestManager.step(_logger, "Add User Profiles");
+        ExtentTestManager.step(_logger, "Add User Profile");
         requestPayload = user;
 
         RestUtil restInstance =
@@ -94,6 +94,50 @@ public class UserProfileService {
                         .expectedStatusCode(httpStatus)
                         .expectedResponseContentType(responseContentType)
                         .put();
+
+        if (!isNegativeTest) {
+            responsePayload = restInstance.responseToPojo(User.class);
+        } else {
+            responsePayload = restInstance.responseToPojo(ValidationError.class);
+        }
+
+        return this;
+    }
+
+    public UserProfileService modifyUserProfiles(User user) throws AutomationException {
+
+        ExtentTestManager.step(_logger, "Modify User Profile");
+        requestPayload = user;
+
+        RestUtil restInstance =
+                RestUtil.init()
+                        .path(APIEndPoint.USER_PROFILES + "update")
+                        .contentType(ContentType.JSON)
+                        .body(user)
+                        .expectedStatusCode(httpStatus)
+                        .expectedResponseContentType(responseContentType)
+                        .post();
+
+        if (!isNegativeTest) {
+            responsePayload = restInstance.responseToPojo(User.class);
+        } else {
+            responsePayload = restInstance.responseToPojo(ValidationError.class);
+        }
+
+        return this;
+    }
+
+    public UserProfileService deleteUserProfiles(String userid) throws AutomationException {
+
+        ExtentTestManager.step(_logger, "Delete User Profile");
+
+        RestUtil restInstance =
+                RestUtil.init()
+                        .path(APIEndPoint.USER_PROFILES + "delete/{userid}")
+                        .pathParam("userid", userid)
+                        .expectedStatusCode(httpStatus)
+                        .expectedResponseContentType(responseContentType)
+                        .delete();
 
         if (!isNegativeTest) {
             responsePayload = restInstance.responseToPojo(User.class);

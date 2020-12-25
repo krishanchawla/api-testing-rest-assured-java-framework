@@ -6,6 +6,8 @@
             <class name="TC_GetAllUsersAPI"/>
             <class name="TC_GetUserByID"/>
             <class name="TC_AddUserAPI"/>
+            <class name="TC_ModifyUserAPI"/>
+            <class name="TC_DeleteUserAPI"/>
         </classes>
     </test>
 </suite>
