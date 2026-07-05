@@ -1,6 +1,7 @@
 package framework.service;
 
 import com.fasterxml.jackson.core.type.TypeReference;
+import framework.auth.AuthStrategyFactory;
 import framework.model.User;
 import framework.model.error.ValidationError;
 import framework.utils.common.RestUtil;
@@ -21,9 +22,14 @@ import java.util.List;
    ----------------------------------------------------------------------- */
 public class UserProfileService {
 
+    private static final String SERVICE_KEY = "user-service";
+
+    private static final String USER_SCHEMA = "schemas/user.schema.json";
+    private static final String USER_LIST_SCHEMA = "schemas/user-list.schema.json";
+    private static final String VALIDATION_ERROR_SCHEMA = "schemas/validation-error.schema.json";
+
     private final Logger _logger = LogManager.getLogger(UserProfileService.class);
 
-    private User requestPayload;
     private Object responsePayload;
     private boolean isNegativeTest = false;
     private HttpStatus httpStatus = HttpStatus.OK;
@@ -40,15 +46,20 @@ public class UserProfileService {
         return this;
     }
 
+    private RestUtil newRequest() throws AutomationException {
+        return RestUtil.init(SERVICE_KEY).auth(AuthStrategyFactory.forService(SERVICE_KEY));
+    }
+
     public UserProfileService getUserProfiles() throws AutomationException {
 
         ExtentTestManager.step(_logger, "Get User Profiles");
 
         RestUtil restInstance =
-                RestUtil.init()
+                newRequest()
                         .path(APIEndPoint.USER_PROFILES)
                         .expectedStatusCode(httpStatus)
                         .expectedResponseContentType(responseContentType)
+                        .expectedSchema(isNegativeTest ? VALIDATION_ERROR_SCHEMA : USER_LIST_SCHEMA)
                         .get();
 
         if (!isNegativeTest) {
@@ -65,11 +76,12 @@ public class UserProfileService {
         ExtentTestManager.step(_logger, "Get User By ID");
 
         RestUtil restInstance =
-                RestUtil.init()
+                newRequest()
                         .path(APIEndPoint.USER_PROFILES + "{userid}")
                         .pathParam("userid", userid)
                         .expectedStatusCode(httpStatus)
                         .expectedResponseContentType(responseContentType)
+                        .expectedSchema(isNegativeTest ? VALIDATION_ERROR_SCHEMA : USER_LIST_SCHEMA)
                         .get();
 
         if (!isNegativeTest) {
@@ -84,15 +96,15 @@ public class UserProfileService {
     public UserProfileService addUserProfiles(User user) throws AutomationException {
 
         ExtentTestManager.step(_logger, "Add User Profile");
-        requestPayload = user;
 
         RestUtil restInstance =
-                RestUtil.init()
+                newRequest()
                         .path(APIEndPoint.USER_PROFILES + "add")
                         .contentType(ContentType.JSON)
                         .body(user)
                         .expectedStatusCode(httpStatus)
                         .expectedResponseContentType(responseContentType)
+                        .expectedSchema(isNegativeTest ? VALIDATION_ERROR_SCHEMA : USER_SCHEMA)
                         .put();
 
         if (!isNegativeTest) {
@@ -107,15 +119,15 @@ public class UserProfileService {
     public UserProfileService modifyUserProfiles(User user) throws AutomationException {
 
         ExtentTestManager.step(_logger, "Modify User Profile");
-        requestPayload = user;
 
         RestUtil restInstance =
-                RestUtil.init()
+                newRequest()
                         .path(APIEndPoint.USER_PROFILES + "update")
                         .contentType(ContentType.JSON)
                         .body(user)
                         .expectedStatusCode(httpStatus)
                         .expectedResponseContentType(responseContentType)
+                        .expectedSchema(isNegativeTest ? VALIDATION_ERROR_SCHEMA : USER_SCHEMA)
                         .post();
 
         if (!isNegativeTest) {
@@ -132,11 +144,12 @@ public class UserProfileService {
         ExtentTestManager.step(_logger, "Delete User Profile");
 
         RestUtil restInstance =
-                RestUtil.init()
+                newRequest()
                         .path(APIEndPoint.USER_PROFILES + "delete/{userid}")
                         .pathParam("userid", userid)
                         .expectedStatusCode(httpStatus)
                         .expectedResponseContentType(responseContentType)
+                        .expectedSchema(isNegativeTest ? VALIDATION_ERROR_SCHEMA : USER_SCHEMA)
                         .delete();
 
         if (!isNegativeTest) {

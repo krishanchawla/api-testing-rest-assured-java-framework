@@ -1,0 +1,19 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "UserList",
+  "type": "array",
+  "items": {
+    "type": "object",
+    "properties": {
+      "id": { "type": ["string", "null"] },
+      "userid": { "type": "string" },
+      "firstname": { "type": "string" },
+      "lastname": { "type": "string" },
+      "emailid": { "type": "string" },
+      "role": { "type": "string" },
+      "status": { "type": "string" }
+    },
+    "required": ["userid", "firstname", "lastname", "emailid", "role", "status"],
+    "additionalProperties": false
+  }
+}

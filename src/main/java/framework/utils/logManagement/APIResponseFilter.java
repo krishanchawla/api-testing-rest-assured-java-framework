@@ -16,7 +16,9 @@ import org.apache.commons.io.output.WriterOutputStream;
 
 import java.io.PrintStream;
 import java.io.StringWriter;
+import java.util.Arrays;
 import java.util.HashSet;
+import java.util.Set;
 
 /* -----------------------------------------------------------------------
    - ** Rest API Testing Framework using RestAssured **
@@ -24,6 +26,13 @@ import java.util.HashSet;
    - Git Repo: https://github.com/krishanchawla/api-testing-rest-assured-java-framework
    ----------------------------------------------------------------------- */
 public class APIResponseFilter implements Filter {
+
+    /**
+     * Header values that must never appear in Extent reports or log files -
+     * rest-assured's LogDetail printers replace these with "[ BLACKLISTED ]".
+     */
+    private static final Set<String> SENSITIVE_HEADERS = new HashSet<>(Arrays.asList(
+            "Authorization", "Cookie", "Set-Cookie", "X-Api-Key"));
 
     @Override
     public Response filter(FilterableRequestSpecification requestSpec, FilterableResponseSpecification responseSpec, FilterContext ctx) {
@@ -33,13 +42,13 @@ public class APIResponseFilter implements Filter {
                 new PrintStream(new WriterOutputStream(new StringWriter())),
                 LogDetail.ALL,
                 true,
-                new HashSet<>());
+                SENSITIVE_HEADERS);
 
         String requestStr = RequestPrinter.print(requestSpec,
                 requestSpec.getMethod(),
                 requestSpec.getURI(),
                 LogDetail.ALL,
-                new HashSet<>(),
+                SENSITIVE_HEADERS,
                 new PrintStream(new WriterOutputStream(new StringWriter())),
                 true);
 

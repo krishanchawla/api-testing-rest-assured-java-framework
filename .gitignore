@@ -1,0 +1,10 @@
+target/
+Output/
+.idea/
+*.iml
+*.log
+*.class
+
+# environment-specific config that must never be committed
+src/main/resources/config/staging.properties
+src/main/resources/config/prod.properties

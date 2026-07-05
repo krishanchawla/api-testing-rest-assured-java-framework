@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE suite SYSTEM "http://testng.org/testng-1.0.dtd">
-<suite name="Rest-API-Testing-Framework">
+<suite name="Rest-API-Testing-Framework" parallel="methods" thread-count="5">
     <test name="Testing-Classes">
         <classes>
             <class name="TC_GetAllUsersAPI"/>

@@ -1,10 +1,12 @@
 import framework.model.User;
 import framework.service.UserProfileService;
 import framework.utils.common.Randomizer;
+import framework.utils.common.TestDataLoader;
 import framework.utils.exceptions.AutomationException;
 import framework.utils.globalConstants.HttpStatus;
 import framework.utils.initializers.TestInit;
 import framework.utils.reportManagement.extent.ExtentTestManager;
+import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -39,45 +41,45 @@ public class TC_AddUserAPI extends TestInit {
     }
 
     /**
-     * Test Case: TC03_AddUserProfileExistingUserId
-     * Test Type: Negative
-     * Description: To verify that user is not able to add new user in system through API if provided userID already exists in system
-     *
-     * @throws AutomationException
+     * Data source for TC03_AddUserProfileNegativeCases, backed by
+     * src/test/resources/testdata/add-user-negative-cases.json - add a new
+     * row to that file to cover another negative case without touching this class.
      */
-    @Test
-    public void TC03_AddUserProfileExistingUserId() throws AutomationException {
+    @DataProvider(name = "addUserNegativeCases")
+    public Object[][] addUserNegativeCases() throws AutomationException {
+        AddUserNegativeCase[] cases = TestDataLoader.loadArray(
+                "testdata/add-user-negative-cases.json", AddUserNegativeCase[].class);
 
-        ExtentTestManager.startTest("Add User Profile", "To verify that user is not able to add new user in system through API if provided userID already exists in system");
-
-        User userToCreate = new User(Randomizer.randomNumberWithoutZero(5));
-        userToCreate.setUserid("KRISHAN001");
-
-        UserProfileService
-                .init()
-                .isNegativeTest(HttpStatus.INTERNAL_SERVER_ERROR)
-                .addUserProfiles(userToCreate);
-
+        Object[][] rows = new Object[cases.length][1];
+        for (int i = 0; i < cases.length; i++) {
+            rows[i][0] = cases[i];
+        }
+        return rows;
     }
 
     /**
-     * Test Case: TC04_AddUserProfileAlphabeticStatus
+     * Test Case: TC03_AddUserProfileNegativeCases
      * Test Type: Negative
-     * Description: To verify that user is not able to add new user in system through API if provided status is not numeric
+     * Description: Table-driven negative cases for adding a user profile (see addUserNegativeCases data provider)
      *
      * @throws AutomationException
      */
-    @Test
-    public void TC04_AddUserProfileAlphabeticStatus() throws AutomationException {
+    @Test(dataProvider = "addUserNegativeCases")
+    public void TC03_AddUserProfileNegativeCases(AddUserNegativeCase testCase) throws AutomationException {
 
-        ExtentTestManager.startTest("Add User Profile", "To verify that user is not able to add new user in system through API if provided status is not numeric");
+        ExtentTestManager.startTest("Add User Profile", "To verify that " + testCase.getDescription());
 
         User userToCreate = new User(Randomizer.randomNumberWithoutZero(5));
-        userToCreate.setStatus("STATUS");
+        if (testCase.getUserIdOverride() != null) {
+            userToCreate.setUserid(testCase.getUserIdOverride());
+        }
+        if (testCase.getStatusOverride() != null) {
+            userToCreate.setStatus(testCase.getStatusOverride());
+        }
 
         UserProfileService
                 .init()
-                .isNegativeTest(HttpStatus.BAD_REQUEST)
+                .isNegativeTest(HttpStatus.fromCode(testCase.getExpectedStatusCode()))
                 .addUserProfiles(userToCreate);
 
     }

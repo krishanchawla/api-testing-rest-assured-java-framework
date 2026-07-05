@@ -3,23 +3,29 @@ package framework.utils.common;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import framework.auth.AuthStrategy;
+import framework.config.EnvironmentConfig;
 import framework.utils.exceptions.AutomationException;
 import framework.utils.globalConstants.HttpStatus;
 import framework.utils.logManagement.APIResponseFilter;
-import framework.utils.propertiesManagement.TestProperties;
 import io.restassured.RestAssured;
 import io.restassured.builder.RequestSpecBuilder;
+import io.restassured.builder.ResponseSpecBuilder;
 import io.restassured.config.EncoderConfig;
+import io.restassured.config.HttpClientConfig;
 import io.restassured.http.ContentType;
 import io.restassured.http.Cookie;
 import io.restassured.http.Cookies;
 import io.restassured.response.Response;
 import io.restassured.specification.RequestSpecification;
+import io.restassured.specification.ResponseSpecification;
 
 import java.io.IOException;
 import java.util.Map;
+import java.util.function.Supplier;
 
 import static io.restassured.RestAssured.given;
+import static io.restassured.module.jsv.JsonSchemaValidator.matchesJsonSchemaInClasspath;
 
 /* -----------------------------------------------------------------------
    - ** Rest API Testing Framework using RestAssured **
@@ -28,46 +34,58 @@ import static io.restassured.RestAssured.given;
    ----------------------------------------------------------------------- */
 public class RestUtil {
 
-    private RequestSpecBuilder requestSpecBuilder;
+    private final RequestSpecBuilder requestSpecBuilder;
     private RequestSpecification requestSpecification;
     private Response apiResponse;
 
     private HttpStatus expectedStatusCode = HttpStatus.OK;
     private String expectedResponseContentType;
+    private String expectedSchemaClasspath;
+
+    private final int retryMaxAttempts;
+    private final long retryBackoffMs;
 
     /**
-     * Returns a new object of RestUtil class
+     * Returns a new object of RestUtil class bound to the given service.
+     * The service's base URL, timeouts and retry policy are resolved from
+     * EnvironmentConfig (config/common.properties + config/&lt;env&gt;.properties).
      *
+     * @param serviceKey key used to look up "service.&lt;serviceKey&gt;.baseUrl" etc.
      * @return this
-     * @throws AutomationException
+     * @throws AutomationException if required config is missing
      */
-    public static RestUtil init() throws AutomationException {
-        return new RestUtil();
+    public static RestUtil init(String serviceKey) throws AutomationException {
+        return new RestUtil(serviceKey);
     }
 
-    /**
-     * RestUtil Default Constructor
-     *
-     * @throws AutomationException
-     */
-    public RestUtil() throws AutomationException {
-        initializeRequestSpec();
-    }
+    private RestUtil(String serviceKey) throws AutomationException {
+        EnvironmentConfig config = EnvironmentConfig.init();
 
-    /**
-     * Initializes Request Specifications including the Base URI Path from test.properties
-     *
-     * @throws AutomationException
-     */
-    private void initializeRequestSpec() throws AutomationException {
+        int connectTimeoutMs = config.getIntProperty("http.connectTimeoutMs", 5000);
+        int socketTimeoutMs = config.getIntProperty("http.socketTimeoutMs", 10000);
+        this.retryMaxAttempts = config.getIntProperty("http.retry.maxAttempts", 1);
+        this.retryBackoffMs = config.getIntProperty("http.retry.backoffMs", 0);
 
-        EncoderConfig encoderconfig = new EncoderConfig();
+        EncoderConfig encoderConfig = new EncoderConfig().appendDefaultContentCharsetToContentTypeIfUndefined(false);
+        HttpClientConfig httpClientConfig = HttpClientConfig.httpClientConfig()
+                .setParam("http.connection.timeout", connectTimeoutMs)
+                .setParam("http.socket.timeout", socketTimeoutMs);
+
         requestSpecBuilder = new RequestSpecBuilder();
+        requestSpecBuilder.setBaseUri(config.getProperty("service." + serviceKey + ".baseUrl"));
+        requestSpecBuilder.setConfig(RestAssured.config().encoderConfig(encoderConfig).httpClient(httpClientConfig));
+    }
 
-        /* ----- H E A D E R S ----- */
-        requestSpecBuilder.setBaseUri(TestProperties.init().getProperty("app.url"));
-        requestSpecBuilder.setConfig(RestAssured.config().encoderConfig(encoderconfig.appendDefaultContentCharsetToContentTypeIfUndefined(false)));
-
+    /**
+     * Applies an authentication strategy (API key, bearer token, basic, OAuth2 client-credentials, ...)
+     * to this request.
+     *
+     * @param authStrategy the strategy to apply
+     * @return this
+     */
+    public RestUtil auth(AuthStrategy authStrategy) {
+        authStrategy.apply(requestSpecBuilder);
+        return this;
     }
 
     /**
@@ -205,30 +223,39 @@ public class RestUtil {
     }
 
     /**
+     * Defines a JSON schema (classpath resource, e.g. "schemas/user.schema.json") that the
+     * response body must satisfy in addition to the status code / content type checks.
+     *
+     * @param classpathSchemaPath classpath-relative path to the JSON schema file
+     * @return this
+     */
+    public RestUtil expectedSchema(String classpathSchemaPath) {
+        this.expectedSchemaClasspath = classpathSchemaPath;
+        return this;
+    }
+
+    /**
      * Hits the Pre-Defined Request Specification as PUT Request
      * <p>
      * On successful response, method validates:
      * -   Status Code against the Status Code provided in Request Specification
      * -   Content Type against the Content Type provided in Request Specification
+     * -   JSON Schema, if one was provided via expectedSchema()
      *
      * @return this
      */
     public RestUtil put() {
         requestSpecification = requestSpecBuilder.build();
-        apiResponse =
-                given()
-                        .log().all()
-                        .filter(new APIResponseFilter())
-                        .spec(requestSpecification)
-                        .when()
-                        .put()
-                        .then()
-                        .assertThat()
-                        .statusCode(expectedStatusCode.getCode())
-                        .contentType(expectedResponseContentType)
-                        .and()
-                        .extract()
-                        .response();
+        apiResponse = executeWithRetry(() -> given()
+                .log().all()
+                .filter(new APIResponseFilter())
+                .spec(requestSpecification)
+                .when()
+                .put()
+                .then()
+                .spec(expectedResponseSpec())
+                .extract()
+                .response());
 
         return this;
     }
@@ -239,25 +266,22 @@ public class RestUtil {
      * On successful response, method validates:
      * -   Status Code against the Status Code provided in Request Specification
      * -   Content Type against the Content Type provided in Request Specification
+     * -   JSON Schema, if one was provided via expectedSchema()
      *
      * @return this
      */
     public RestUtil delete() {
         requestSpecification = requestSpecBuilder.build();
-        apiResponse =
-                given()
-                        .log().all()
-                        .filter(new APIResponseFilter())
-                        .spec(requestSpecification)
-                        .when()
-                        .delete()
-                        .then()
-                        .assertThat()
-                        .statusCode(expectedStatusCode.getCode())
-                        .contentType(expectedResponseContentType)
-                        .and()
-                        .extract()
-                        .response();
+        apiResponse = executeWithRetry(() -> given()
+                .log().all()
+                .filter(new APIResponseFilter())
+                .spec(requestSpecification)
+                .when()
+                .delete()
+                .then()
+                .spec(expectedResponseSpec())
+                .extract()
+                .response());
 
         return this;
     }
@@ -268,25 +292,22 @@ public class RestUtil {
      * On successful response, method validates:
      * -   Status Code against the Status Code provided in Request Specification
      * -   Content Type against the Content Type provided in Request Specification
+     * -   JSON Schema, if one was provided via expectedSchema()
      *
      * @return this
      */
     public RestUtil post() {
         requestSpecification = requestSpecBuilder.build();
-        apiResponse =
-                given()
-                        .log().all()
-                        .filter(new APIResponseFilter())
-                        .spec(requestSpecification)
-                        .when()
-                        .post()
-                        .then()
-                        .assertThat()
-                        .statusCode(expectedStatusCode.getCode())
-                        .contentType(expectedResponseContentType)
-                        .and()
-                        .extract()
-                        .response();
+        apiResponse = executeWithRetry(() -> given()
+                .log().all()
+                .filter(new APIResponseFilter())
+                .spec(requestSpecification)
+                .when()
+                .post()
+                .then()
+                .spec(expectedResponseSpec())
+                .extract()
+                .response());
 
         return this;
     }
@@ -297,27 +318,82 @@ public class RestUtil {
      * On successful response, method validates:
      * -   Status Code against the Status Code provided in Request Specification
      * -   Content Type against the Content Type provided in Request Specification
+     * -   JSON Schema, if one was provided via expectedSchema()
      *
      * @return this
      */
     public RestUtil get() {
         requestSpecification = requestSpecBuilder.build();
-        apiResponse =
-                given()
-                        .log().all()
-                        .filter(new APIResponseFilter())
-                        .spec(requestSpecification)
-                        .when()
-                        .get()
-                        .then()
-                        .assertThat()
-                        .statusCode(expectedStatusCode.getCode())
-                        .contentType(expectedResponseContentType)
-                        .and()
-                        .extract()
-                        .response();
+        apiResponse = executeWithRetry(() -> given()
+                .log().all()
+                .filter(new APIResponseFilter())
+                .spec(requestSpecification)
+                .when()
+                .get()
+                .then()
+                .spec(expectedResponseSpec())
+                .extract()
+                .response());
 
         return this;
+    }
+
+    private ResponseSpecification expectedResponseSpec() {
+        ResponseSpecBuilder responseSpecBuilder = new ResponseSpecBuilder()
+                .expectStatusCode(expectedStatusCode.getCode())
+                .expectContentType(expectedResponseContentType);
+
+        if (expectedSchemaClasspath != null) {
+            responseSpecBuilder.expectBody(matchesJsonSchemaInClasspath(expectedSchemaClasspath));
+        }
+
+        return responseSpecBuilder.build();
+    }
+
+    /**
+     * Retries the given HTTP call on transient network failures (connect/socket timeout)
+     * using the configured http.retry.maxAttempts / http.retry.backoffMs. Assertion
+     * failures (wrong status code, schema mismatch, ...) are never retried - they are
+     * genuine test failures, not flakiness.
+     */
+    private Response executeWithRetry(Supplier<Response> requestExecutor) {
+        RuntimeException lastFailure = null;
+
+        for (int attempt = 1; attempt <= Math.max(1, retryMaxAttempts); attempt++) {
+            try {
+                return requestExecutor.get();
+            } catch (RuntimeException ex) {
+                if (!isTransientNetworkFailure(ex) || attempt == retryMaxAttempts) {
+                    throw ex;
+                }
+                lastFailure = ex;
+                sleepQuietly(retryBackoffMs * attempt);
+            }
+        }
+
+        throw lastFailure;
+    }
+
+    private static boolean isTransientNetworkFailure(Throwable ex) {
+        for (Throwable cause = ex; cause != null; cause = cause.getCause()) {
+            // covers java.net.SocketTimeoutException and org.apache.http.conn.ConnectTimeoutException,
+            // both of which extend InterruptedIOException rather than each other
+            if (cause instanceof java.io.InterruptedIOException || cause instanceof java.net.ConnectException) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private static void sleepQuietly(long millis) {
+        if (millis <= 0) {
+            return;
+        }
+        try {
+            Thread.sleep(millis);
+        } catch (InterruptedException ie) {
+            Thread.currentThread().interrupt();
+        }
     }
 
     /**
@@ -362,6 +438,7 @@ public class RestUtil {
      * @return
      * @throws AutomationException
      */
+    @SuppressWarnings("unchecked")
     public <T> T responseToPojo(TypeReference type) throws AutomationException {
         try {
             return (T) new ObjectMapper().enable(DeserializationFeature.ACCEPT_SINGLE_VALUE_AS_ARRAY).readValue(getApiResponseAsString(), type);

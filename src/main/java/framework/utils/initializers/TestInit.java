@@ -62,6 +62,7 @@ public class TestInit {
     @AfterSuite(alwaysRun = true)
     public void completeSuite(ITestContext context) {
         _logger.info("*** Test Suite " + context.getName() + " ending ***");
+        ExtentTestManager.flush();
     }
 
 }

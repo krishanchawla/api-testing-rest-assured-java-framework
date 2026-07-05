@@ -1,0 +1,14 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "ValidationError",
+  "type": "object",
+  "properties": {
+    "timestamp": { "type": "string" },
+    "status": { "type": "string" },
+    "error": { "type": "string" },
+    "message": { "type": "string" },
+    "path": { "type": "string" }
+  },
+  "required": ["status", "error", "message"],
+  "additionalProperties": true
+}

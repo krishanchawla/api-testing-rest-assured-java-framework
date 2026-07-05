@@ -7,7 +7,6 @@ package framework.utils.globalConstants;
    ----------------------------------------------------------------------- */
 public class PathConfig {
 
-    private final static String PROPERTIES_TEST = "./src/main/resources/test.properties";
     private final static String PROPERTIES_LOG4J = "./src/test/resources/log4j2.xml";
 
     private static String OUTPUT_DIR_NAME = "";
@@ -49,10 +48,6 @@ public class PathConfig {
 
     public static void setApplogsPath(String applogsPath) {
         APPLOGS_PATH = applogsPath;
-    }
-
-    public static String getPropertiesTest() {
-        return PROPERTIES_TEST;
     }
 
     public static String getPropertiesLog4j() {

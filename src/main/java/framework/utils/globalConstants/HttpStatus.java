@@ -79,6 +79,20 @@ public enum HttpStatus {
     }
 
     /**
+     * Looks up the enum constant for a raw HTTP status code (e.g. from test data).
+     * @param code the numeric status code
+     * @return the matching HttpStatus
+     */
+    public static HttpStatus fromCode(int code) {
+        for (HttpStatus status : values()) {
+            if (status.code == code) {
+                return status;
+            }
+        }
+        throw new IllegalArgumentException("No HttpStatus constant for code " + code);
+    }
+
+    /**
      * Gets the HTTP status code
      * @return the status code number
      */

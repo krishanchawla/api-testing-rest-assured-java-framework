@@ -19,25 +19,28 @@ public class ExtentTestManager {
 
     static ExtentReports extent = ExtentManager.getInstance();
 
-    public static synchronized ExtentTest getTest() {
-        return ExtentReporter
-                .get((int) (Thread.currentThread().getId()));
+    public static ExtentTest getTest() {
+        return ExtentReporter.get();
     }
 
-    public static synchronized ExtentTest startTest(String module, String testCase, String... params) {
+    public static ExtentTest startTest(String module, String testCase, String... params) {
         ExtentTest extentModule = ExtentModuleManager.getModule(module);
         String testCaseDescription = MessageFormat.format(testCase, params);
         ExtentTest test = extentModule.createNode(testCaseDescription);
-        ExtentReporter.set((int) (Thread.currentThread().getId()), test);
+        ExtentReporter.set(test);
 
         return test;
     }
 
-    public static synchronized void endTest() {
+    /** Per-test cleanup only - call flush() once, in TestInit.completeSuite() (@AfterSuite), to write the report. */
+    public static void endTest() {
+    }
+
+    public static void flush() {
         extent.flush();
     }
 
-    public static synchronized void log(Logger logger, Status status, Object logObject) {
+    public static void log(Logger logger, Status status, Object logObject) {
         ExtentTest test = getTest();
 
         if (logObject instanceof String) {
@@ -52,7 +55,7 @@ public class ExtentTestManager {
 
     }
 
-    public static synchronized void step(Logger logger, String log) {
+    public static void step(Logger logger, String log) {
         ExtentTest test = getTest();
         test.log(Status.INFO, MarkupHelper.createLabel("Performing -> " + log, ExtentColor.INDIGO));
     }
