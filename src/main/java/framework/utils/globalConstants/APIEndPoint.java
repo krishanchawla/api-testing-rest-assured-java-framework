@@ -7,6 +7,9 @@ package framework.utils.globalConstants;
    ----------------------------------------------------------------------- */
 public class APIEndPoint {
 
-    public static final String USER_PROFILES = "/user-service/api/";
+    public static final String API_AUTH_TOKEN = "/api/scenarios/api-auth/token";
+    public static final String API_AUTH_PROTECTED = "/api/scenarios/api-auth/protected";
+    public static final String API_AUTH_REFRESH = "/api/scenarios/api-auth/refresh";
+    public static final String API_AUTH_REVOKE = "/api/scenarios/api-auth/revoke";
 
 }

@@ -1,0 +1,29 @@
+[
+  {
+    "caseName": "TC_WrongPassword",
+    "description": "a known username with an incorrect password returns 401 invalid_credentials, not a token (R2)",
+    "username": "standard_user",
+    "password": "wrongpass",
+    "rawBody": null,
+    "expectedStatusCode": 401,
+    "expectedError": "invalid_credentials"
+  },
+  {
+    "caseName": "TC_MissingPasswordField",
+    "description": "a request body missing the password field returns the same 401 invalid_credentials as a wrong password, with no separate validation error (R3)",
+    "username": "standard_user",
+    "password": null,
+    "rawBody": null,
+    "expectedStatusCode": 401,
+    "expectedError": "invalid_credentials"
+  },
+  {
+    "caseName": "TC_NonJsonBody",
+    "description": "a request body that is not valid JSON returns 400 invalid_body, distinguishing malformed requests from bad credentials (R4)",
+    "username": null,
+    "password": null,
+    "rawBody": "not-json",
+    "expectedStatusCode": 400,
+    "expectedError": "invalid_body"
+  }
+]

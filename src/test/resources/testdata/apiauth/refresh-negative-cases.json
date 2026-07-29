@@ -1,0 +1,30 @@
+[
+  {
+    "caseName": "TC_SupersededRefreshToken",
+    "description": "a refresh token already consumed by a prior rotation is single-use and returns 401 revoked_token on reuse (R10)",
+    "mode": "SUPERSEDED",
+    "expectedStatusCode": 401,
+    "expectedError": "revoked_token"
+  },
+  {
+    "caseName": "TC_ExplicitlyRevokedRefreshToken",
+    "description": "a refresh token explicitly invalidated via /revoke returns 401 revoked_token, and it fails immediately rather than at its natural expiry (R11, R14)",
+    "mode": "REVOKED",
+    "expectedStatusCode": 401,
+    "expectedError": "revoked_token"
+  },
+  {
+    "caseName": "TC_GarbageRefreshToken",
+    "description": "a syntactically invalid/garbage refresh token returns 401 invalid_token (R12)",
+    "mode": "GARBAGE",
+    "expectedStatusCode": 401,
+    "expectedError": "invalid_token"
+  },
+  {
+    "caseName": "TC_AccessTokenSubmittedAsRefreshToken",
+    "description": "an access token submitted where a refresh token is expected returns 401 wrong_type rather than being treated as merely unrecognized (R13)",
+    "mode": "WRONG_TYPE",
+    "expectedStatusCode": 401,
+    "expectedError": "wrong_type"
+  }
+]

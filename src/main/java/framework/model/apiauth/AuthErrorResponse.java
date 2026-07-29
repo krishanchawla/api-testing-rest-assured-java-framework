@@ -1,33 +1,18 @@
-package framework.model.error;
+package framework.model.apiauth;
 
 /* -----------------------------------------------------------------------
    - ** Rest API Testing Framework using RestAssured **
    - Author: Krishan Chawla (krishanchawla1467@gmail.com)
    - Git Repo: https://github.com/krishanchawla/api-testing-rest-assured-java-framework
+   -----------------------------------------------------------------------
+   Common error response shape used across every negative path in the
+   api-auth scenario: /token (R2/R3/R4), /protected (R6/R7/R8) and
+   /refresh (R10/R11/R12/R13) all return {"error": "<code>"[, "message": "..."]}.
    ----------------------------------------------------------------------- */
-public class ValidationError {
+public class AuthErrorResponse {
 
-    private String timestamp;
-    private String status;
     private String error;
     private String message;
-    private String path;
-
-    public String getTimestamp() {
-        return timestamp;
-    }
-
-    public void setTimestamp(String timestamp) {
-        this.timestamp = timestamp;
-    }
-
-    public String getStatus() {
-        return status;
-    }
-
-    public void setStatus(String status) {
-        this.status = status;
-    }
 
     public String getError() {
         return error;
@@ -45,11 +30,4 @@ public class ValidationError {
         this.message = message;
     }
 
-    public String getPath() {
-        return path;
-    }
-
-    public void setPath(String path) {
-        this.path = path;
-    }
 }

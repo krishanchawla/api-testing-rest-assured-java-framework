@@ -1,14 +1,16 @@
-/* -----------------------------------------------------------------------
-   - ** Rest API Testing Framework using RestAssured **
-   - Test data POJO for TC_AddUserAPI's data-driven negative cases
-   ----------------------------------------------------------------------- */
-public class AddUserNegativeCase {
+/**
+ * A single row of {@code testdata/apiauth/protected-negative-cases.json}, backing
+ * TC_ApiAuthProtected#TC02_ProtectedResourceNegativeCases (R6, R7). {@code tokenMode} is
+ * either {@code NONE} (no Authorization header sent at all) or {@code GARBAGE} (a
+ * syntactically invalid bearer token is sent).
+ */
+public class ProtectedNegativeCase {
 
     private String caseName;
     private String description;
-    private String userIdOverride;
-    private String statusOverride;
+    private String tokenMode;
     private int expectedStatusCode;
+    private String expectedError;
 
     public String getCaseName() {
         return caseName;
@@ -26,20 +28,12 @@ public class AddUserNegativeCase {
         this.description = description;
     }
 
-    public String getUserIdOverride() {
-        return userIdOverride;
+    public String getTokenMode() {
+        return tokenMode;
     }
 
-    public void setUserIdOverride(String userIdOverride) {
-        this.userIdOverride = userIdOverride;
-    }
-
-    public String getStatusOverride() {
-        return statusOverride;
-    }
-
-    public void setStatusOverride(String statusOverride) {
-        this.statusOverride = statusOverride;
+    public void setTokenMode(String tokenMode) {
+        this.tokenMode = tokenMode;
     }
 
     public int getExpectedStatusCode() {
@@ -48,6 +42,14 @@ public class AddUserNegativeCase {
 
     public void setExpectedStatusCode(int expectedStatusCode) {
         this.expectedStatusCode = expectedStatusCode;
+    }
+
+    public String getExpectedError() {
+        return expectedError;
+    }
+
+    public void setExpectedError(String expectedError) {
+        this.expectedError = expectedError;
     }
 
     /** TestNG uses toString() to label each data-provider row in the report. */

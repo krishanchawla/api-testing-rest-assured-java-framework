@@ -1,13 +1,23 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE suite SYSTEM "http://testng.org/testng-1.0.dtd">
-<suite name="Rest-API-Testing-Framework" parallel="methods" thread-count="5">
-    <test name="Testing-Classes">
+<suite name="Rest-API-Testing-Framework">
+    <test name="Testing-Classes" parallel="methods" thread-count="5">
         <classes>
-            <class name="TC_GetAllUsersAPI"/>
-            <class name="TC_GetUserByID"/>
-            <class name="TC_AddUserAPI"/>
-            <class name="TC_ModifyUserAPI"/>
-            <class name="TC_DeleteUserAPI"/>
+            <class name="TC_ApiAuthToken"/>
+            <class name="TC_ApiAuthProtected"/>
+            <class name="TC_ApiAuthRefresh"/>
+            <class name="TC_ApiAuthRevoke"/>
+        </classes>
+    </test>
+    <!--
+      Isolated in its own sequential, single-threaded test block because R8 requires a real
+      ~21s wait for the sandbox's access-token TTL to elapse. Keeping it out of the
+      parallel="methods" pool above avoids both tying up one of that pool's shared threads
+      for 20+ seconds and any flakiness from timing-sensitive assertions racing other tests.
+    -->
+    <test name="Testing-Classes-Slow" thread-count="1">
+        <classes>
+            <class name="TC_ApiAuthProtectedExpiry"/>
         </classes>
     </test>
 </suite>

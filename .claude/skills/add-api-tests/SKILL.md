@@ -69,10 +69,10 @@ conversation) that includes:
 - The resolved service key and target env.
 - Explicit pointers to the framework files it should pattern-match against:
   `src/main/java/framework/utils/common/RestUtil.java`,
-  `src/main/java/framework/service/UserProfileService.java`,
+  `src/main/java/framework/service/AuthTokenService.java`,
   `src/main/java/framework/auth/AuthStrategyFactory.java`,
-  `src/test/resources/schemas/user.schema.json`,
-  `src/test/java/TC_AddUserAPI.java` (for the `@DataProvider` + JSON testdata pattern),
+  `src/test/resources/schemas/apiauth/token-pair.schema.json`,
+  `src/test/java/TC_ApiAuthRefresh.java` (for the `@DataProvider` + JSON testdata pattern),
   `src/main/java/framework/config/EnvironmentConfig.java`.
 - Whether this is new-service or update mode (and, if update mode, the existing generated files to
   reconcile against).

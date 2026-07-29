@@ -1,0 +1,16 @@
+[
+  {
+    "caseName": "TC_MissingAuthorizationHeader",
+    "description": "no Authorization header at all returns 401 missing_token (R6)",
+    "tokenMode": "NONE",
+    "expectedStatusCode": 401,
+    "expectedError": "missing_token"
+  },
+  {
+    "caseName": "TC_GarbageBearerToken",
+    "description": "a syntactically invalid/garbage bearer token returns 401 invalid_token, distinct from the missing-header case (R7)",
+    "tokenMode": "GARBAGE",
+    "expectedStatusCode": 401,
+    "expectedError": "invalid_token"
+  }
+]

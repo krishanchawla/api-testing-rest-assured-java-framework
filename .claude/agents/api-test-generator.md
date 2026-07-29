@@ -57,17 +57,21 @@ Follow the existing framework's conventions exactly - do not introduce a new sty
 first to pattern-match against (paths relative to repo root):
 - `src/main/java/framework/utils/common/RestUtil.java` - the generic fluent HTTP client. Reuse it;
   don't reimplement request-building.
-- `src/main/java/framework/service/UserProfileService.java` - the shape every `<Key>Service` class
+- `src/main/java/framework/service/AuthTokenService.java` - the shape every `<Key>Service` class
   should follow: a `newRequest()` helper doing
   `RestUtil.init(SERVICE_KEY).auth(AuthStrategyFactory.forService(SERVICE_KEY))`, then per-operation
   methods using the `.path/.pathParam/.body/.expectedStatusCode/.expectedResponseContentType/
-  .expectedSchema/.get()|.post()|.put()|.delete()` builder chain.
+  .expectedSchema/.get()|.post()|.put()|.delete()` builder chain. Note its comment block for how to
+  handle a service where the auth token itself is dynamic/under test rather than a static configured
+  secret - attach headers per-call via `RestUtil.headers(Map.of(...))` instead of routing through
+  `AuthStrategyFactory`'s `bearer` type in that case.
 - `src/main/java/framework/auth/AuthStrategyFactory.java` and `src/main/java/framework/config/
   EnvironmentConfig.java` - config/auth conventions (`service.<key>.baseUrl`,
   `service.<key>.authType`, secrets resolved only via `SERVICE_<KEY>_AUTH_*` env vars, never written
   to a properties file).
-- `src/test/resources/schemas/user.schema.json` - JSON Schema style to follow for new schemas.
-- `src/test/java/TC_AddUserAPI.java` - the `@DataProvider` + JSON testdata file pattern
+- `src/test/resources/schemas/apiauth/token-pair.schema.json` - JSON Schema style to follow for new
+  schemas.
+- `src/test/java/TC_ApiAuthRefresh.java` - the `@DataProvider` + JSON testdata file pattern
   (`src/test/resources/testdata/*.json` loaded via `framework.utils.common.TestDataLoader`) to use
   when a requirement yields a table of cases (e.g. the boundary/equivalence-partition cases from
   step 3).
@@ -85,7 +89,7 @@ Produce:
    requirement ID and quote (or closely paraphrase) the requirement text it verifies.** This is not
    optional - it's the only thing that makes the suite reviewable and is what the skill puts into the
    PR's traceability table. Use `@DataProvider`-backed methods (loading a JSON testdata file, per the
-   `TC_AddUserAPI.java` pattern) wherever step 3 produced a table of cases rather than a single case.
+   `TC_ApiAuthRefresh.java` pattern) wherever step 3 produced a table of cases rather than a single case.
 6. Register the new test class in `testng.xml`.
 
 ## Step 5 - New-service vs. update mode
